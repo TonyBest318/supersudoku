@@ -46,4 +46,11 @@ UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStor
 
 ## 当前验证范围
 
-自动测试覆盖核心数学约束与游戏状态转换；浏览器检查实际键盘、3×3 草稿、同数高亮、三错锁定、刷新恢复、新游戏和窄屏布局。构建同时生成静态主包和 Worker 包。不依赖外部字体、图片或 API；本地静态服务可离线运行，暂未做可安装 PWA。
+自动测试覆盖核心数学约束与游戏状态转换；浏览器检查实际键盘、3×3 草稿、同数高亮、三错锁定、刷新恢复、新游戏和窄屏布局。构建同时生成静态主包和 Worker 包。不依赖外部字体、图片或 API；本地静态服务可离线运行，生产构建支持可安装 PWA。
+
+
+## PWA
+
+`public/manifest.webmanifest` 定义独立窗口安装、名称和图标。`scripts/build-sw.mjs` 在 Vite 构建后扫描完整 dist，以文件内容 hash 命名缓存；包括单独的出题 Worker。Service Worker 采用完整版本缓存，导航返回同版本 HTML，不强制 skipWaiting；最后一个旧窗口关闭后激活新版本，仅清理本应用 scope 的旧缓存。
+
+`src/pwa/InstallPanel.tsx` 仅在生产、安全上下文中注册 SW。浏览器支持 beforeinstallprompt 时显示安装按钮；其他环境提供系统安装说明。安装区域键盘事件不传播至游戏。页面使用 safe-area-inset 适配独立窗口安全区域。

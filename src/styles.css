@@ -32,3 +32,14 @@ footer {
   font-family: var(--font-numbers);
   font-variant-numeric: lining-nums tabular-nums;
 }
+
+/* Standalone app safe areas and installation controls. */
+body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+button { touch-action: manipulation; }
+.install-panel { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.install-panel strong { font-size: 14px; font-weight: 500; }
+.install-panel p { font-size: 12px; line-height: 1.8; color: var(--muted); margin: 6px 0; }
+.install-panel details { flex-basis: 100%; font-size: 12px; color: var(--muted); }
+.install-panel summary { cursor: pointer; }
+.install-button { border: 0; border-radius: 7px; padding: 11px 18px; background: var(--button); color: var(--button-text); }
+.install-button:hover { background: var(--button-hover); }

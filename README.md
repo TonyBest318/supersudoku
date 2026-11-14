@@ -11,7 +11,7 @@ npm run dev
 
 打开终端显示的本地地址。生产构建：`npm run build`；预览：`npm run preview`；测试：`npm test`。
 
-游戏无需账号、后端或互联网 API。依赖安装需要网络；安装后本地服务器可在断网时运行。当前不提供 Service Worker 离线安装，也不支持直接双击 `dist/index.html`。
+游戏无需账号、后端或互联网 API。依赖安装需要网络；安装后本地服务器可在断网时运行。生产构建包含 Service Worker 离线缓存与 PWA 安装支持；不支持直接双击 `dist/index.html`。
 
 ## 配色
 
@@ -56,3 +56,18 @@ npm run dev
 浏览器已实际检查：键盘草稿输入、方向移动、同数草稿高亮、擦除撤销、刷新恢复、第三错锁定、新游戏和桌面/窄屏布局。
 
 模块说明见 [架构](docs/architecture.md)。
+
+## 安装到手机 / 平板（PWA）
+
+1. 运行 `npm run build`，将整个 `dist/` 部署到 HTTPS 静态站点根路径。服务器为 `sw.js` 和 `index.html` 设置 `Cache-Control: no-cache`，带 hash 的 assets 可长期缓存。
+2. 首次联网打开网页，等页面底部显示“离线资源已就绪”。此后断网可恢复进度，也可随机生成新题。
+3. Android Chrome：点击页面提供的“安装应用”（浏览器允许时显示），或浏览器菜单 → 安装应用 / 添加到主屏幕。
+4. iPhone / iPad：用 Safari 打开 → 分享 → 添加到主屏幕。系统如显示“作为 Web App 打开”，保持开启。
+
+本机验证：`npm run preview` 后访问 localhost。手机访问电脑的普通 HTTP 局域网 IP 不满足 PWA 安全上下文要求；需要可信 HTTPS，不要绕过证书警告。
+
+`npm run dev` 不注册 Service Worker，防止开发时缓存旧代码。生产构建会预缓存 HTML、JS、CSS、图标、manifest 和出题 Worker。新版缓存准备好后，会等待旧应用窗口全部关闭再激活；重新打开即使用新版，本地存档和主题不受缓存更新影响。浏览器清除站点数据或系统回收站点存储仍可能删除缓存和存档。
+
+安装不提供跨设备同步；各设备各自保存。iOS 的主屏幕应用可能使用独立存储，不保证继承 Safari 中现有进度。
+
+验证命令：`npm run test:pwa` 检查构建图标尺寸、manifest、离线页面和出题 Worker 缓存，以及旧缓存清理边界。手机系统安装弹窗与真机离线体验仍需在 HTTPS 部署后验证。
