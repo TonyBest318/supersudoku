@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const scope = 'https://sudoku.example/';
+const base = process.env.VITE_BASE_PATH || '/';
+const scope = `https://sudoku.example${base}`;
+const html = await readFile('dist/index.html', 'utf8');
+test('build asset URLs use the deployment base', () => {
+  assert.ok(html.includes(`href="${base}manifest.webmanifest"`));
+  assert.ok(html.includes(`src="${base}assets/`));
+});
 const manifest = JSON.parse(await readFile('dist/manifest.webmanifest', 'utf8'));
 const worker = await readFile('dist/sw.js', 'utf8');
 test('install manifest and all required icon files are present', async () => {

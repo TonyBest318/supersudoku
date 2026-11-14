@@ -75,3 +75,13 @@ npm run dev
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## GitHub Pages
+
+推送到 `main` 会运行 `.github/workflows/pages.yml`：安装依赖、游戏测试、构建及 PWA 校验，通过后部署到 GitHub Pages。也可在 Actions 手动触发。
+
+站点地址：https://TonyBest318.github.io/supersudoku/
+
+仓库 Settings → Pages → Source 需要选择 **GitHub Actions**。构建设置 `VITE_BASE_PATH=/supersudoku/`，覆盖主包、图标、manifest 与 Service Worker 路径；普通本地/Sites 构建默认仍用 `/`。
+
+本地验证 Pages 构建：`VITE_BASE_PATH=/supersudoku/ npm run test:pwa`。两个域名的进度和安装实例各自保存，不互相同步。
