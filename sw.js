@@ -1,7 +1,7 @@
 // Generated from the entire build, including the puzzle worker.
 const PREFIX = 'super-sudoku:' + self.registration.scope;
-const CACHE = PREFIX + "a6dc414531d1aa03";
-const ASSETS = ["./assets/generator.worker--f9HCdun.js","./assets/index-C4F7Y6Im.css","./assets/index-DXHxxZn3.js","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/icon.svg","./icons/maskable-512.png","./index.html","./manifest.webmanifest"];
+const CACHE = PREFIX + "5a7987746f670735";
+const ASSETS = ["./assets/generator.worker-iTquPWUU.js","./assets/index-BMjp8P5o.css","./assets/index-C_ZLUcge.js","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/icon.svg","./icons/maskable-512.png","./index.html","./manifest.webmanifest"];
 async function navigationResponse(response) {
   if (!response || !response.redirected) return response;
   // clone() preserves URL/redirect history. A new Response does not.
