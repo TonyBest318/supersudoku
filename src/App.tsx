@@ -2,6 +2,7 @@ import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { Board } from './components/Board';
 import { DIGITS, type Digit } from './domain/types';
 import { useGame } from './game/useGame';
+import { ThemePicker } from './theme/ThemePicker';
 import { SHORTCUTS } from './game/shortcuts';
 
 function ToolIcon({ kind }: { kind: 'undo' | 'erase' | 'notes' }) {
@@ -89,5 +90,6 @@ export function App() {
         </aside>
       </div>}
     <footer><span>1–9 填数 · ↑ ↓ ← → 移动 · {SHORTCUTS.notes} 草稿</span><span>Delete 擦除 · Ctrl / ⌘ Z 回退</span></footer>
+    <ThemePicker />
   </main>;
 }
