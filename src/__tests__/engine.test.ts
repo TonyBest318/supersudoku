@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generatePuzzle } from '../domain/generator';
+import { generateCandidate as generatePuzzle } from '../domain/generator';
 import { solve } from '../domain/solver';
 import { DIGITS, type Digit, type Value } from '../domain/types';
 import { createGame, gameReducer } from '../game/reducer';

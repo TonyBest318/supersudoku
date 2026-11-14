@@ -1,3 +1,4 @@
+import { analyzePuzzle } from '../domain/logicalSolver';
 import { solve } from '../domain/solver';
 import { DIGITS, type Cell, type GameState } from '../domain/types';
 export const SAVE_KEY = 'super-sudoku.game.v1';
@@ -24,6 +25,9 @@ export function parseSavedGame(raw: string): GameState | null {
       s.mistakes < 0 || s.mistakes > 3 || !Array.isArray(s.history) || s.history.length > 200 ||
       !s.history.every(h => h && validCells(h.cells, s.puzzle.givens))) return null;
     const expected = s.mistakes === 3 ? 'lost' : s.cells.every((c, i) => c.value === s.puzzle.solution[i]) ? 'completed' : 'playing';
-    return s.status === expected ? s : null;
+    if (s.status !== expected) return null;
+    // Saved reports are untrusted; regenerate from the validated givens.
+    if (s.puzzle.analysis) s.puzzle.analysis = analyzePuzzle(s.puzzle.givens);
+    return s;
   } catch { return null; }
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { GenerationProgress } from '../domain/generator';
 import type { GameAction, GameState } from '../domain/types';
 import { parseSavedGame, SAVE_KEY } from '../storage/localStorage';
 import { createGame, gameReducer } from './reducer';
@@ -8,16 +9,18 @@ export function useGame() {
     try { const raw = localStorage.getItem(SAVE_KEY); return raw ? parseSavedGame(raw) : null; } catch { return null; }
   });
   const [generating, setGenerating] = useState(false);
+  const [progress, setProgress] = useState<GenerationProgress | null>(null);
   const [error, setError] = useState('');
   const [storageError, setStorageError] = useState(false);
   const worker = useRef<Worker | null>(null);
   const newGame = useCallback(() => {
     worker.current?.terminate();
-    setGenerating(true); setError('');
+    setGenerating(true); setProgress(null); setError('');
     try {
       const task = new Worker(new URL('./generator.worker.ts', import.meta.url), { type: 'module' });
       worker.current = task;
       task.onmessage = ({ data }) => {
+        if (data.progress) { setProgress(data.progress); return; }
         if (data.puzzle) setState(createGame(data.puzzle)); else setError(data.error);
         setGenerating(false); task.terminate(); worker.current = null;
       };
@@ -39,5 +42,5 @@ export function useGame() {
   const dispatch = useCallback((action: GameAction) => {
     if (!generating) setState(current => current ? gameReducer(current, action) : current);
   }, [generating]);
-  return { state, dispatch, newGame, generating, error, storageError };
+  return { state, dispatch, newGame, generating, progress, error, storageError };
 }
