@@ -43,7 +43,7 @@ export function App() {
       mainRef.current?.querySelector<HTMLButtonElement>(`[data-cell="${index}"]`)?.focus();
     } else if (/^[1-9]$/.test(key)) {
       event.preventDefault(); if (!event.repeat) dispatch({ type: 'input', digit: Number(key) as Digit });
-    } else if (key === 'n') {
+    } else if (key === SHORTCUTS.notes.toLowerCase() && playable) {
       event.preventDefault(); if (!event.repeat) dispatch({ type: 'toggle-notes' });
     } else if (key === 'backspace' || key === 'delete') {
       event.preventDefault(); if (!event.repeat) dispatch({ type: 'erase' });
@@ -64,7 +64,7 @@ export function App() {
           <div className="toolbar" aria-label="游戏操作">
             <button disabled={!playable || !state.history.length} onClick={() => dispatch({ type: 'undo' })} aria-label="回退" title={SHORTCUTS.undo}><span className="tool-icon"><ToolIcon kind="undo" /></span>回退<small>Ctrl / ⌘ Z</small></button>
             <button disabled={!playable || selectedCell?.given || (selectedCell?.value === null && !selectedCell.notes.length)} onClick={() => dispatch({ type: 'erase' })} aria-label="擦除" title={SHORTCUTS.erase}><span className="tool-icon"><ToolIcon kind="erase" /></span>擦除<small>⌫ / Delete</small></button>
-            <button disabled={!playable} className={state.notesMode ? 'notes-active' : ''} aria-pressed={state.notesMode} onClick={() => dispatch({ type: 'toggle-notes' })} aria-label="草稿模式" title="N"><span className="tool-icon"><ToolIcon kind="notes" /><b className="mode-badge">{state.notesMode ? 'ON' : 'OFF'}</b></span>草稿<small>N</small></button>
+            <button disabled={!playable} className={state.notesMode ? 'notes-active' : ''} aria-pressed={state.notesMode} onClick={() => dispatch({ type: 'toggle-notes' })} aria-label="草稿模式" title={SHORTCUTS.notes}><span className="tool-icon"><ToolIcon kind="notes" /><b className="mode-badge">{state.notesMode ? 'ON' : 'OFF'}</b></span>草稿<small>{SHORTCUTS.notes}</small></button>
           </div>
           <div className="keypad" aria-label="输入数字">
             {DIGITS.map(digit => <button key={digit} disabled={!playable} className={digit === state.highlightedDigit ? 'active' : ''}
@@ -79,6 +79,6 @@ export function App() {
           </div>
         </aside>
       </div>}
-    <footer><span>1–9 填数 · ↑ ↓ ← → 移动 · N 草稿</span><span>Delete 擦除 · Ctrl / ⌘ Z 回退</span></footer>
+    <footer><span>1–9 填数 · ↑ ↓ ← → 移动 · {SHORTCUTS.notes} 草稿</span><span>Delete 擦除 · Ctrl / ⌘ Z 回退</span></footer>
   </main>;
 }
