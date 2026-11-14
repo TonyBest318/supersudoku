@@ -71,3 +71,7 @@ npm run dev
 安装不提供跨设备同步；各设备各自保存。iOS 的主屏幕应用可能使用独立存储，不保证继承 Safari 中现有进度。
 
 验证命令：`npm run test:pwa` 检查构建图标尺寸、manifest、离线页面和出题 Worker 缓存，以及旧缓存清理边界。手机系统安装弹窗与真机离线体验仍需在 HTTPS 部署后验证。
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
