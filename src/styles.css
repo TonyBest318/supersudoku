@@ -10,6 +10,18 @@ aside{display:flex;flex-direction:column;gap:16px}.stats{display:flex;justify-co
 @media(prefers-reduced-motion:no-preference){.keypad button,.tool-icon,.new-game{transition:background .12s ease}}
 
 /* Keep every numeric display consistent, including notes and status text. */
+.keypad button.digit-completed {
+  color: #9aa8ba;
+  background: #f2f5f9;
+  border-color: transparent;
+  opacity: 1;
+}
+.digit-check {
+  width: 0.85em;
+  height: 0.85em;
+  vertical-align: middle;
+}
+
 .cell,
 .keypad button,
 .stats strong,

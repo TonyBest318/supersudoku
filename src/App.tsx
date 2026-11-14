@@ -67,8 +67,17 @@ export function App() {
             <button disabled={!playable} className={state.notesMode ? 'notes-active' : ''} aria-pressed={state.notesMode} onClick={() => dispatch({ type: 'toggle-notes' })} aria-label="草稿模式" title={SHORTCUTS.notes}><span className="tool-icon"><ToolIcon kind="notes" /><b className="mode-badge">{state.notesMode ? 'ON' : 'OFF'}</b></span>草稿<small>{SHORTCUTS.notes}</small></button>
           </div>
           <div className="keypad" aria-label="输入数字">
-            {DIGITS.map(digit => <button key={digit} disabled={!playable} className={digit === state.highlightedDigit ? 'active' : ''}
-              aria-label={`输入 ${digit}`} onClick={() => dispatch({ type: 'input', digit })}>{digit}</button>)}
+            {DIGITS.map(digit => {
+              const completed = state.cells.every((cell, index) =>
+                (cell.value === digit) === (state.puzzle.solution[index] === digit));
+              return <button key={digit} disabled={!playable || completed}
+                className={[digit === state.highlightedDigit ? 'active' : '', completed ? 'digit-completed' : ''].filter(Boolean).join(' ')}
+                aria-label={completed ? `${digit} 已填完` : `输入 ${digit}`}
+                title={completed ? `${digit} 已填完` : undefined}
+                onClick={() => dispatch({ type: 'input', digit })}>
+                {completed ? <svg className="digit-check" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 16 7 7L26 9" /></svg> : digit}
+              </button>;
+            })}
           </div>
           <button className="new-game" disabled={generating} onClick={requestGame}>{generating ? '正在生成…' : 'New Game'}</button>
           <div aria-live="polite" aria-atomic="true">
