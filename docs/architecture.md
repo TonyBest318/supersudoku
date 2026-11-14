@@ -51,6 +51,8 @@ UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStor
 
 ## PWA
 
-`public/manifest.webmanifest` 定义独立窗口安装、名称和图标。`scripts/build-sw.mjs` 在 Vite 构建后扫描完整 dist，以文件内容 hash 命名缓存；包括单独的出题 Worker。Service Worker 采用完整版本缓存，导航返回同版本 HTML，不强制 skipWaiting；最后一个旧窗口关闭后激活新版本，仅清理本应用 scope 的旧缓存。
+`public/manifest.webmanifest` 定义独立窗口安装、名称和图标。`scripts/build-sw.mjs` 在 Vite 构建后扫描完整 dist，以文件内容 hash 命名缓存；包括单独的出题 Worker。Service Worker 采用完整版本缓存，导航返回同版本 HTML，缓存成功后 skipWaiting 以恢复无法打开的旧客户端，不强制刷新窗口，仅清理本应用 scope 的旧缓存。
 
 `src/pwa/InstallPanel.tsx` 仅在生产、安全上下文中注册 SW。浏览器支持 beforeinstallprompt 时显示安装按钮；其他环境提供系统安装说明。安装区域键盘事件不传播至游戏。页面使用 safe-area-inset 适配独立窗口安全区域。
+
+缓存导航响应使用新 Response 去掉重定向记录（clone 会保留该记录），避免 Safari 报 “Response served by service worker has redirections”。缓存版本同时包含 SW 构建脚本 hash，确保仅 SW 变更也会建立新缓存。
