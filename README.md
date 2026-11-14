@@ -78,10 +78,21 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## GitHub Pages
 
-推送到 `main` 会运行 `.github/workflows/pages.yml`：安装依赖、游戏测试、构建及 PWA 校验，通过后部署到 GitHub Pages。也可在 Actions 手动触发。
+在本机测试、构建并推送静态产物：
+
+```sh
+npm ci
+npm run deploy:pages
+```
+
+发布前先提交源码。脚本要求工作区干净，运行游戏测试、TypeScript/Vite 构建与 PWA 校验，然后在临时目录中将 `dist/` 和 `.nojekyll` 提交到 `origin` 的 `gh-pages` 分支。已有发布历史会保留，不强推，也不切换当前工作分支。没有产物变化时跳过提交。
+
+首次设置：仓库 **Settings → Pages → Source: Deploy from a branch → gh-pages → / (root) → Save**。
 
 站点地址：https://TonyBest318.github.io/supersudoku/
 
-仓库 Settings → Pages → Source 需要选择 **GitHub Actions**。构建设置 `VITE_BASE_PATH=/supersudoku/`，覆盖主包、图标、manifest 与 Service Worker 路径；普通本地/Sites 构建默认仍用 `/`。
+已移除自定义 Actions workflow；推送 `main` 仅更新源码，发布新版需在本地运行上述命令。GitHub 自身仍会运行 Pages 内部发布任务，`.nojekyll` 跳过 Jekyll 构建。
 
-本地验证 Pages 构建：`VITE_BASE_PATH=/supersudoku/ npm run test:pwa`。两个域名的进度和安装实例各自保存，不互相同步。
+构建设置 `VITE_BASE_PATH=/supersudoku/`，覆盖主包、图标、manifest 与 Service Worker 路径；普通本地/Sites 构建默认仍用 `/`。
+
+仅验证、不发布：`VITE_BASE_PATH=/supersudoku/ npm run test:pwa`。两个域名的进度和安装实例各自保存，不互相同步。
