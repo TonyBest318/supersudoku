@@ -8,7 +8,7 @@ React + strict TypeScript + Vite + CSS Grid。没有全局状态库、后端、�
 
 UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStorage。
 
-新游戏 → Web Worker → 随机完整解 → 逐格随机挖空 + 唯一解检查 → Puzzle → createGame。
+新游戏 → Web Worker → 随机完整解 → 逐格随机挖空 + 唯一解检查 → 低阶停滞验证 → 完整逻辑解题与评级 → Puzzle → createGame。
 
 ## 模块
 
@@ -17,7 +17,9 @@ UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStor
 | `src/domain/types.ts` | 题目、单元格、操作、游戏状态 |
 | `src/domain/board.ts` | 行、列、宫关系 |
 | `src/domain/solver.ts` | 位掩码 + 最少候选优先回溯，最多寻找两个解 |
-| `src/domain/generator.ts` | 随机生成完整解，随机尝试挖空，唯一解约束，集中配置 |
+| `src/domain/generator.ts` | 随机终盘与挖空、唯一解约束、技巧筛选及时间/数量预算 |
+| `src/domain/logicalSolver.ts` | 10 种人类技巧、候选持续消除、结构化推理记录 |
+| `src/components/DifficultyReport.tsx` | 技巧统计，终局后查看逐步推理 |
 | `src/game/generator.worker.ts` | 后台生成，避免阻塞输入与绘制 |
 | `src/game/reducer.ts` | 输入、草稿、擦除、撤销、错误计数和完成判断 |
 | `src/game/useGame.ts` | Worker 生命周期、状态持有、存档恢复及持久化 |
@@ -36,9 +38,11 @@ UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStor
 
 ## 随机生成和验证
 
-从空盘用随机候选顺序求出完整解；打乱 81 格顺序后尝试删除。每次删除调用确定性求解器，发现第二解便立即停止并恢复该格。最多生成 attempts 个候选，达到 targetClues 提前结束，否则选择已知数最少的一题。求解器拒绝格式错误和初始冲突。
+从空盘用随机候选顺序求出完整解；打乱 81 格顺序后尝试删除。每次删除调用确定性求解器，发现第二解便立即停止并恢复该格。`generateCandidate` 只保证唯一解，供内部与测试使用；游戏调用 `generatePuzzle` 做技巧筛选。
 
-这一版把 Extreme 作为唯一模式标签，尚未实施技巧评级。较少的已知数不必然更难。后续可在配置层增加对称挖空、技巧评分与接受阈值，而不必改变界面。
+默认先运行 rank ≤ 3 的逻辑解题器；能解出的题立即拒绝。低阶停滞后运行完整技巧库，只有成功解完且答案与唯一解一致的题才发布。默认最多 400 个候选、20 秒预算，失败抛出错误，不降级。Worker 发送进度消息，主线程保留当前游戏直至新题成功；失败后可重试。
+
+每题附带 `analysis`：版本、状态、最高技巧等级、各技巧次数和完整推理。旧存档没有该字段，保持未评级。已评级存档恢复时从已验证的 givens 重算报告，避免信任未经校验的存储内容。详细规则见 [逻辑评级](logical-rating.md)。
 
 ## 本地持久化
 

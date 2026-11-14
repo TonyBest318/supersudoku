@@ -43,3 +43,15 @@ button { touch-action: manipulation; }
 .install-panel summary { cursor: pointer; }
 .install-button { border: 0; border-radius: 7px; padding: 11px 18px; background: var(--button); color: var(--button-text); }
 .install-button:hover { background: var(--button-hover); }
+
+.difficulty-report { margin-top: 22px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); }
+.difficulty-report > strong { font-size: 14px; }
+.difficulty-report p { font-size: 12px; line-height: 1.8; color: var(--muted); }
+.technique-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
+.technique-list li { font-size: 12px; padding: 6px 10px; border-radius: 6px; background: var(--surface); }
+.technique-list li.advanced-technique { background: var(--active); color: var(--accent); }
+.technique-list span, .logical-steps, .difficulty-report summary, .loading p { font-family: var(--font-numbers); }
+.difficulty-report summary { cursor: pointer; font-size: 13px; }
+.logical-steps { max-height: 420px; overflow: auto; padding-left: 28px; font-size: 12px; }
+.logical-steps li { padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.logical-steps p { overflow-wrap: anywhere; margin: 4px 0; }

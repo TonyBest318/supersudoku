@@ -37,6 +37,7 @@ export const UNITS = [
   ...Array.from({ length: 9 }, (_, b) => Array.from({ length: 9 }, (_, k) =>
     Math.floor(b / 3) * 27 + (b % 3) * 3 + Math.floor(k / 3) * 9 + k % 3)),
 ];
+const unitName = (index: number) => index < 9 ? `第 ${index + 1} 行` : index < 18 ? `第 ${index - 8} 列` : `第 ${index - 17} 宫`;
 const PEERS = Array.from({ length: 81 }, (_, i) =>
   Array.from({ length: 81 }, (_, j) => j).filter(j => i !== j && isPeer(i, j)));
 const coord = (i: number) => `R${Math.floor(i / 9) + 1}C${i % 9 + 1}`;
@@ -72,7 +73,7 @@ export function analyzePuzzle(values: readonly Value[], maxRank = 4): LogicalRep
     }
     for (const unit of UNITS) for (const digit of DIGITS) {
       const cells = locations(unit, digit);
-      if (cells.length === 1) return { technique: 'hiddenSingle', cells, digits: [digit], placements: [{ cell: cells[0], digit }], eliminations: [], reason: `所在行、列或宫只有 ${coord(cells[0])} 能放 ${digit}` };
+      if (cells.length === 1) return { technique: 'hiddenSingle', cells, digits: [digit], placements: [{ cell: cells[0], digit }], eliminations: [], reason: `${unitName(UNITS.indexOf(unit))}只有 ${coord(cells[0])} 能放 ${digit}` };
     }
     if (maxRank < 2) return;
     // Intersecting units: pointing (box -> line) and claiming (line -> box).
@@ -81,7 +82,7 @@ export function analyzePuzzle(values: readonly Value[], maxRank = 4): LogicalRep
       for (const d of DIGITS) {
         const cells = locations(UNITS[a], d);
         if (cells.length < 2 || !cells.every(i => UNITS[b].includes(i))) continue;
-        const step = elimination('lockedCandidates', cells, [d], UNITS[b].filter(i => !UNITS[a].includes(i)), `数字 ${d} 被限制在两个区域的交集，排除另一区域其余位置`);
+        const step = elimination('lockedCandidates', cells, [d], UNITS[b].filter(i => !UNITS[a].includes(i)), `${unitName(a)}的数字 ${d} 被限制在 ${cells.map(coord).join('、')}，排除${unitName(b)}其余位置`);
         if (step) return step;
       }
     }
@@ -91,7 +92,7 @@ export function analyzePuzzle(values: readonly Value[], maxRank = 4): LogicalRep
       for (const cells of combinations(empty.filter(i => candidates[i].size <= size), size)) {
         const digits = [...new Set(cells.flatMap(i => [...candidates[i]]))];
         if (digits.length !== size) continue;
-        const step = elimination(size === 2 ? 'nakedPair' : 'nakedTriple', cells, digits, empty.filter(i => !cells.includes(i)), `${cells.map(coord).join('、')} 的 ${size} 个格子只含 ${size} 个数字，排除同区域其余格的这些数字`);
+        const step = elimination(size === 2 ? 'nakedPair' : 'nakedTriple', cells, digits, empty.filter(i => !cells.includes(i)), `${cells.map(coord).join('、')} 的 ${size} 个格子只含数字 ${digits.join('、')}，排除同区域其余格的这些数字`);
         if (step) return step;
       }
       for (const digits of combinations(DIGITS.filter(d => locations(unit, d).length > 0), size)) {
@@ -114,7 +115,7 @@ export function analyzePuzzle(values: readonly Value[], maxRank = 4): LogicalRep
         const covers = new Set(cells.map(cover));
         if (covers.size !== size) continue;
         const targets = Array.from({ length: 81 }, (_, i) => i).filter(i => !selected.includes(base(i)) && covers.has(cover(i)));
-        const step = elimination(size === 2 ? 'xWing' : 'swordfish', cells, [d], targets, `${size} 个${transpose ? '列' : '行'}的 ${d} 限制在相同 ${size} 个${transpose ? '行' : '列'}，排除覆盖区域其余的 ${d}`);
+        const step = elimination(size === 2 ? 'xWing' : 'swordfish', cells, [d], targets, `${transpose ? '列' : '行'} ${selected.map(i => i + 1).join('、')} 的 ${d} 限制在${transpose ? '行' : '列'} ${[...covers].map(i => i + 1).join('、')}，排除覆盖区域其余的 ${d}`);
         if (step) return step;
       }
     }
