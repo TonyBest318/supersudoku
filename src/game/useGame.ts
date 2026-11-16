@@ -13,27 +13,37 @@ export function useGame() {
   const [error, setError] = useState('');
   const [storageError, setStorageError] = useState(false);
   const worker = useRef<Worker | null>(null);
-  const newGame = useCallback(() => {
+  const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const stopWorker = useCallback(() => {
+    clearTimeout(watchdog.current);
     worker.current?.terminate();
+    worker.current = null;
+  }, []);
+  const newGame = useCallback(() => {
+    stopWorker();
     setGenerating(true); setProgress(null); setError('');
     try {
       const task = new Worker(new URL('./generator.worker.ts', import.meta.url), { type: 'module' });
       worker.current = task;
+      watchdog.current = setTimeout(() => {
+        stopWorker(); setGenerating(false); setError('L9 生成超时，请重新生成。当前进度已保留。');
+      }, 25000);
       task.onmessage = ({ data }) => {
+        if (worker.current !== task) return;
         if (data.progress) { setProgress(data.progress); return; }
         if (data.puzzle) setState(createGame(data.puzzle)); else setError(data.error);
-        setGenerating(false); task.terminate(); worker.current = null;
+        setGenerating(false); stopWorker();
       };
-      task.onerror = () => { setError('题目生成失败，请重试。'); setGenerating(false); task.terminate(); worker.current = null; };
+      task.onerror = () => { setError('题目生成失败，请重试。'); setGenerating(false); stopWorker(); };
       task.postMessage(null);
-    } catch { setGenerating(false); setError('无法启动题目生成器，请刷新重试。'); }
-  }, []);
+    } catch { stopWorker(); setGenerating(false); setError('无法启动题目生成器，请刷新重试。'); }
+  }, [stopWorker]);
   useEffect(() => {
     if (!state) newGame();
-    return () => worker.current?.terminate();
+    return stopWorker;
     // Initial generation only; StrictMode cleanup cancels the first worker.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [stopWorker]);
   useEffect(() => {
     if (!state) return;
     try { localStorage.setItem(SAVE_KEY, JSON.stringify({ schemaVersion: 1, savedAt: new Date().toISOString(), state })); setStorageError(false); }

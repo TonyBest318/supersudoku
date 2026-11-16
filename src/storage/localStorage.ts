@@ -1,3 +1,4 @@
+import { analyzeCorePuzzle } from '../domain/coreRating';
 import { analyzePuzzle } from '../domain/logicalSolver';
 import { solve } from '../domain/solver';
 import { DIGITS, type Cell, type GameState } from '../domain/types';
@@ -27,7 +28,8 @@ export function parseSavedGame(raw: string): GameState | null {
     const expected = s.mistakes === 3 ? 'lost' : s.cells.every((c, i) => c.value === s.puzzle.solution[i]) ? 'completed' : 'playing';
     if (s.status !== expected) return null;
     // Saved reports are untrusted; regenerate from the validated givens.
-    if (s.puzzle.analysis) s.puzzle.analysis = analyzePuzzle(s.puzzle.givens);
+    if (s.puzzle.analysis) s.puzzle.analysis = s.puzzle.analysis.version === 2
+      ? analyzeCorePuzzle(s.puzzle.givens) : analyzePuzzle(s.puzzle.givens);
     return s;
   } catch { return null; }
 }

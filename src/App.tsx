@@ -54,8 +54,8 @@ export function App() {
   }
   return <main className="app" ref={mainRef} onKeyDown={onKeyDown} tabIndex={-1}>
     <header><a className="brand" href="./">Super Sudoku<span>专注每一步。</span></a><span className="local-label"><i /> 单机 · 本地保存</span></header>
-    <div className="heading"><h1>Difficulty: <strong>Extreme</strong></h1><span>不计时，慢慢想。</span></div>
-    {!state ? <section className="loading" aria-live="polite"><div className="loading-grid">▦</div><h2>{error || '正在生成你的数独…'}</h2><p>随机挖空，校验唯一解与逻辑难度。{progress && ` 已筛选 ${progress.attempt} 个候选题。`}</p>{error && <button className="new-game" onClick={newGame}>重新生成</button>}</section> :
+    <div className="heading"><h1>Difficulty: <strong>{!state || state.puzzle.analysis?.version === 2 ? 'L9' : 'Extreme（旧题）'}</strong></h1><span>不计时，慢慢想。</span></div>
+    {!state ? <section className="loading" aria-live="polite"><div className="loading-grid">▦</div><h2>{error || '正在生成你的数独…'}</h2><p>生成 L9 数独，校验唯一解与逻辑难度。{progress && ` 已筛选 ${progress.attempt} 个候选题。`}</p>{error && <button className="new-game" onClick={newGame}>重新生成</button>}</section> :
       <div className="game-layout" aria-busy={generating}>
         <div className="board-wrap">
           <Board cells={state.cells} selected={state.selected} highlightedDigit={state.highlightedDigit}

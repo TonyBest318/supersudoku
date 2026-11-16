@@ -1,4 +1,5 @@
-import { analyzePuzzle } from './logicalSolver';
+import { generate as coreGenerate } from 'sudoku-core';
+import { analyzeCorePuzzle, isL9Report } from './coreRating';
 import { shuffle, solve } from './solver';
 import type { Puzzle, Value } from './types';
 
@@ -24,27 +25,36 @@ export function generateCandidate(config: { targetClues: number; attempts: numbe
   return best!;
 }
 
-// Rank 4 requires fish/wing logic; rank <= 3 includes all supported subsets.
-export const GENERATION_CONFIG = { targetClues: 25, attempts: 400, minRank: 4, maxMilliseconds: 20000 } as const;
+// Use the pinned engine's actual L9 rating, never a local approximation.
+export const GENERATION_CONFIG = { attempts: 500, maxMilliseconds: 20000 } as const;
 export interface GenerationProgress { attempt: number; limit: number }
 export function generatePuzzle(
-  config: { targetClues: number; attempts: number; minRank: number; maxMilliseconds: number } = GENERATION_CONFIG,
+  config: { attempts: number; maxMilliseconds: number } = GENERATION_CONFIG,
   random = Math.random,
   onProgress?: (progress: GenerationProgress) => void,
 ): Puzzle {
   if (!Number.isInteger(config.attempts) || config.attempts < 1 || config.attempts > 5000 ||
-      !Number.isInteger(config.minRank) || config.minRank < 2 || config.minRank > 4 ||
       !Number.isFinite(config.maxMilliseconds) || config.maxMilliseconds <= 0) throw new Error('生成参数无效');
   const start = performance.now();
   for (let attempt = 1; attempt <= config.attempts; attempt++) {
-    if (performance.now() - start >= config.maxMilliseconds) break;
+    const remaining = config.maxMilliseconds - (performance.now() - start);
+    if (remaining <= 0) break;
     onProgress?.({ attempt, limit: config.attempts });
-    const puzzle = generateCandidate({ targetClues: config.targetClues, attempts: 1 }, random);
-    // Reject easy candidates cheaply before running the full technique set.
-    if (analyzePuzzle(puzzle.givens, config.minRank - 1).status !== 'stalled') continue;
-    const analysis = analyzePuzzle(puzzle.givens);
-    if (analysis.status === 'solved' && analysis.hardestRank >= config.minRank &&
-        analysis.board.every((v, i) => v === puzzle.solution[i])) return { ...puzzle, analysis };
+    let givens: Value[];
+    try {
+      givens = coreGenerate('L9', { seed: Math.floor(random() * 0x100000000), maxAttempts: 1, timeoutMs: remaining }) as Value[];
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('Could not generate a "L9" puzzle within budget')) continue;
+      throw error;
+    }
+    const analysis = analyzeCorePuzzle(givens);
+    if (!isL9Report(analysis)) continue;
+    const solutions = solve(givens, 2);
+    if (solutions.length !== 1 || !analysis.board.every((v, i) => v === solutions[0][i])) continue;
+    // Independently check all reported placements and eliminations against the unique answer.
+    if (!analysis.steps.every(step => step.placements.every(c => c.digit === solutions[0][c.cell]) &&
+        step.eliminations.every(c => c.digit !== solutions[0][c.cell]))) continue;
+    return { id: givens.map(n => n ?? 0).join(''), givens, solution: solutions[0], analysis };
   }
-  throw new Error('本次未找到满足技巧难度且无需猜测的题目，请重新生成。');
+  throw new Error('本次未找到通过 L9 评级的题目，请重新生成。');
 }
