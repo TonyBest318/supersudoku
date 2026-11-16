@@ -2,13 +2,13 @@
 
 ## 技术选择
 
-React + strict TypeScript + Vite + CSS Grid。没有全局状态库、后端、在线题库或第三方运行时服务。Vitest 验证纯函数核心。
+React + strict TypeScript + Vite + CSS Grid。使用固定版本 sudoku-core 4.1.1，本地生成并评定 L9。没有全局状态库、后端、在线题库或第三方运行时服务。Vitest 验证纯函数核心。
 
 ## 数据流
 
 UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStorage。
 
-新游戏 → Web Worker → 随机完整解 → 逐格随机挖空 + 唯一解检查 → 低阶停滞验证 → 完整逻辑解题与评级 → Puzzle → createGame。
+新游戏 → Web Worker → sudoku-core L9 生成 → 重新评级、拒绝 L10 步骤 → 独立唯一解及逐步答案校验 → Puzzle → createGame。
 
 ## 模块
 
@@ -18,7 +18,8 @@ UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStor
 | `src/domain/board.ts` | 行、列、宫关系 |
 | `src/domain/solver.ts` | 位掩码 + 最少候选优先回溯，最多寻找两个解 |
 | `src/domain/generator.ts` | 随机终盘与挖空、唯一解约束、技巧筛选及时间/数量预算 |
-| `src/domain/logicalSolver.ts` | 10 种人类技巧、候选持续消除、结构化推理记录 |
+| `src/domain/logicalSolver.ts` | 旧版 10 种技巧解题器，保留原存档评级兼容 |
+| `src/domain/coreRating.ts` | sudoku-core 正式评级、步骤适配与 L9 上限校验 |
 | `src/components/DifficultyReport.tsx` | 技巧统计，终局后查看逐步推理 |
 | `src/game/generator.worker.ts` | 后台生成，避免阻塞输入与绘制 |
 | `src/game/reducer.ts` | 输入、草稿、擦除、撤销、错误计数和完成判断 |
@@ -38,11 +39,11 @@ UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStor
 
 ## 随机生成和验证
 
-从空盘用随机候选顺序求出完整解；打乱 81 格顺序后尝试删除。每次删除调用确定性求解器，发现第二解便立即停止并恢复该格。`generateCandidate` 只保证唯一解，供内部与测试使用；游戏调用 `generatePuzzle` 做技巧筛选。
+`generatePuzzle` 调用固定版本 sudoku-core 的 `generate('L9')`，每次一个随机终盘，最多 500 次 / 20 秒，发送实际终盘尝试进度。库在挖空时检查唯一解、逻辑可解与等级。随后重新用 `solve` 获取正式评级与步骤，拒绝非 L9、未知技巧或 L10 步骤，并用独立回溯引擎验证唯一解、最终答案和每步填入/消除。
 
-默认先运行 rank ≤ 3 的逻辑解题器；能解出的题立即拒绝。低阶停滞后运行完整技巧库，只有成功解完且答案与唯一解一致的题才发布。默认最多 400 个候选、20 秒预算，失败抛出错误，不降级。Worker 发送进度消息，主线程保留当前游戏直至新题成功；失败后可重试。
+Worker 失败时不替换旧局。主线程另设 25 秒终止保护，完成、失败、新游戏或卸载时清理计时器。`generateCandidate` 仍保留为旧解题器的测试工具，不参与新游戏生成。
 
-每题附带 `analysis`：版本、状态、最高技巧等级、各技巧次数和完整推理。旧存档没有该字段，保持未评级。已评级存档恢复时从已验证的 givens 重算报告，避免信任未经校验的存储内容。详细规则见 [逻辑评级](logical-rating.md)。
+报告 version=2 表示 sudoku-core，并记录精确引擎版本、L 等级、技巧计数和步骤。version=1 是旧版本地评级。恢复存档时根据版本，从已验证 givens 重新计算报告；未评级旧存档不强加新等级。详细规则见 [逻辑评级](logical-rating.md)。
 
 ## 本地持久化
 

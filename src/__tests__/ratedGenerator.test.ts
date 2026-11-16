@@ -56,6 +56,7 @@ it('rejects lower ratings, L10 techniques and unknown techniques rather than sil
   }
 });
 it('validates settings and stops at its time budget without downgrading', () => {
+  expect(() => generatePuzzle({ ...GENERATION_CONFIG, attempts: 1 }, seeded(1))).toThrow('未找到');
   expect(() => generatePuzzle({ ...GENERATION_CONFIG, attempts: 0 })).toThrow('参数无效');
   expect(() => generatePuzzle({ ...GENERATION_CONFIG, maxMilliseconds: Infinity })).toThrow('参数无效');
   let time = 0;

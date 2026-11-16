@@ -34,7 +34,7 @@ export function useGame() {
         if (data.puzzle) setState(createGame(data.puzzle)); else setError(data.error);
         setGenerating(false); stopWorker();
       };
-      task.onerror = () => { setError('题目生成失败，请重试。'); setGenerating(false); stopWorker(); };
+      task.onerror = () => { if (worker.current !== task) return; setError('题目生成失败，请重试。'); setGenerating(false); stopWorker(); };
       task.postMessage(null);
     } catch { stopWorker(); setGenerating(false); setError('无法启动题目生成器，请刷新重试。'); }
   }, [stopWorker]);

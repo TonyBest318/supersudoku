@@ -39,24 +39,21 @@ npm run dev
 
 ## 调整生成参数
 
+新游戏使用固定版本 **sudoku-core 4.1.1** 的正式 **L9** 评级，没有难度选择器。包含最高到 L9 的 Jellyfish、Finned Swordfish、Finned Jellyfish、BUG+1、X-Chain、XY-Chain；一题只会用到其中部分技巧。
+
+生成器调用 `generate('L9')`，然后重新求解评级；只接受等级恰好 L9、步骤中没有 L10 技巧的题目。继续使用本仓库独立求解器确认唯一解、核对最终答案，以及每次填入/候选消除的正确性。不能把库内的数值 rank 直接当作 L 等级；正式评级也考虑累计解题工作量。
+
 编辑 [`src/domain/generator.ts`](src/domain/generator.ts) 中的 `GENERATION_CONFIG`：
 
 ```ts
-{ targetClues: 25, attempts: 400, minRank: 4, maxMilliseconds: 20000 }
+{ attempts: 500, maxMilliseconds: 20000 }
 ```
 
-- `targetClues`：挖空的目标已知数（17–80），仍然每步检查唯一解。
-- `attempts`：最多筛选候选题数量（1–5000），不再是挑最少已知数的次数。
-- `minRank`：最低技巧等级（2–4）；默认 4，要求用区块排除、显隐数对/三数组仍无法解完，而加入鱼形/翼形技巧后可以完整解出。
-- `maxMilliseconds`：筛选时间预算，默认 20 秒，在每次开始新候选前检查；失败明确提示重试，不返回简单题或需猜测的题。
+这是候选终盘数量与时间预算。每次挖空时都由库检查唯一解和等级，已知数数量不作为难度判定。主线程另外在 25 秒后终止过慢的出题 Worker。预算用尽提示重试，保留原进度，不返回低等级题或 L10 题。
 
-逻辑解题器独立维护候选数，只做可解释的消除，不读取答案、不回溯。依次支持显性单数、隐性单数、区块排除（指向/认领）、显性/隐性数对、显性/隐性三数组、X-Wing、Swordfish、XY-Wing；每步后重新从最简单技巧开始。每道新题都必须唯一解、低阶解题器停滞、完整逻辑解题器成功，并与独立唯一解一致。
+页面显示 `L9 · sudoku-core`、技巧次数；本局结束后可展开技巧、模式位置、填入与消除记录。链的强弱边未由上游步骤 API 完整暴露，当前展示模式格及结果，不声称提供逐条链边证明。游戏中不提供提示按钮。
 
-页面底部显示本题实际使用的技巧与次数；本局结束后可以展开完整推理（原因、填入、消除）。不提供游戏中的提示按钮。旧存档保留并标为未评级，开始新游戏才应用新的筛选。
-
-**Extreme 是本应用单一模式名称，不等同于 sudoku.com 或 Sudoku Explainer 的评级。** 这里保证的是相对于已实现技巧库的难度下限和无猜测解法；技巧次数属于一条确定性解题路径，不表示每个技巧在所有可能解法中都不可替代。未支持链、ALS 等技巧，逻辑解不出的题会被拒绝，而不是标为更难。
-
-设计参考与验证说明见 [逻辑评级](docs/logical-rating.md)。
+旧题保持原进度与原评级；开始新游戏才生成 L9。sudoku-core 的 L9 不等同于 sudoku.com 的 Extreme。设计和版本说明见 [逻辑评级](docs/logical-rating.md)。
 
 ## 验证
 
@@ -83,7 +80,7 @@ npm run dev
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE). Bundled sudoku-core attribution is included in [third-party licenses](public/third-party-licenses.txt).
 
 ## GitHub Pages
 

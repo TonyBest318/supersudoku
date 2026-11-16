@@ -55,3 +55,4 @@ button { touch-action: manipulation; }
 .logical-steps { max-height: 420px; overflow: auto; padding-left: 28px; font-size: 12px; }
 .logical-steps li { padding: 8px 4px; border-bottom: 1px solid var(--line); }
 .logical-steps p { overflow-wrap: anywhere; margin: 4px 0; }
+.heading strong, .difficulty-report > p > strong { font-family: var(--font-numbers); }
