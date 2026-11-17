@@ -2,13 +2,13 @@
 
 ## 技术选择
 
-React + strict TypeScript + Vite + CSS Grid。使用固定版本 sudoku-core 4.1.1，本地生成并评定 L9。没有全局状态库、后端、在线题库或第三方运行时服务。Vitest 验证纯函数核心。
+React + strict TypeScript + Vite + CSS Grid。使用固定版本 sudoku-core 4.1.1，本地生成并评定 easy=L8 / medium=L9。没有全局状态库、后端、在线题库或第三方运行时服务。Vitest 验证纯函数核心。
 
 ## 数据流
 
 UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStorage。
 
-新游戏 → Web Worker → sudoku-core L9 生成 → 重新评级、拒绝 L10 步骤 → 独立唯一解及逐步答案校验 → Puzzle → createGame。
+新游戏 → Web Worker → sudoku-core 按 easy/medium 生成 → 重新评级、校验所选档位技巧上限 → 独立唯一解及逐步答案校验 → Puzzle → createGame。
 
 ## 模块
 
@@ -19,7 +19,8 @@ UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStor
 | `src/domain/solver.ts` | 位掩码 + 最少候选优先回溯，最多寻找两个解 |
 | `src/domain/generator.ts` | 随机终盘与挖空、唯一解约束、技巧筛选及时间/数量预算 |
 | `src/domain/logicalSolver.ts` | 旧版 10 种技巧解题器，保留原存档评级兼容 |
-| `src/domain/coreRating.ts` | sudoku-core 正式评级、步骤适配与 L9 上限校验 |
+| `src/domain/coreRating.ts` | sudoku-core 正式评级、步骤适配与所选档位上限校验 |
+| `src/domain/difficulty.ts` | easy/L8、medium/L9 映射与存档难度识别 |
 | `src/components/DifficultyReport.tsx` | 技巧统计，终局后查看逐步推理 |
 | `src/game/generator.worker.ts` | 后台生成，避免阻塞输入与绘制 |
 | `src/game/reducer.ts` | 输入、草稿、擦除、撤销、错误计数和完成判断 |
@@ -39,7 +40,7 @@ UI / 键盘 → GameAction → gameReducer → GameState → 棋盘和 localStor
 
 ## 随机生成和验证
 
-`generatePuzzle` 调用固定版本 sudoku-core 的 `generate('L9')`，每次一个随机终盘，最多 500 次 / 20 秒，发送实际终盘尝试进度。库在挖空时检查唯一解、逻辑可解与等级。随后重新用 `solve` 获取正式评级与步骤，拒绝非 L9、未知技巧或 L10 步骤，并用独立回溯引擎验证唯一解、最终答案和每步填入/消除。
+`generatePuzzle` 调用固定版本 sudoku-core 的 `generate('L8')` / `generate('L9')`，每次一个随机终盘，最多 500 次 / 20 秒，发送实际终盘尝试进度。库在挖空时检查唯一解、逻辑可解与等级。随后重新用 `solve` 获取正式评级与步骤，拒绝等级不符、未知技巧或超过所选档位的步骤，并用独立回溯引擎验证唯一解、最终答案和每步填入/消除。
 
 Worker 失败时不替换旧局。主线程另设 25 秒终止保护，完成、失败、新游戏或卸载时清理计时器。`generateCandidate` 仍保留为旧解题器的测试工具，不参与新游戏生成。
 
