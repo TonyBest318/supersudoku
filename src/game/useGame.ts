@@ -1,3 +1,4 @@
+import { puzzleDifficulty, type GameDifficulty } from '../domain/difficulty';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GenerationProgress } from '../domain/generator';
 import type { GameAction, GameState } from '../domain/types';
@@ -8,6 +9,8 @@ export function useGame() {
   const [state, setState] = useState<GameState | null>(() => {
     try { const raw = localStorage.getItem(SAVE_KEY); return raw ? parseSavedGame(raw) : null; } catch { return null; }
   });
+  const [difficulty, setDifficulty] = useState<GameDifficulty>(() => state ? puzzleDifficulty(state.puzzle) : 'easy');
+  const [pendingDifficulty, setPendingDifficulty] = useState<GameDifficulty | null>(null);
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState<GenerationProgress | null>(null);
   const [error, setError] = useState('');
@@ -19,25 +22,26 @@ export function useGame() {
     worker.current?.terminate();
     worker.current = null;
   }, []);
-  const newGame = useCallback(() => {
+  const newGame = useCallback((requested: GameDifficulty = difficulty) => {
     stopWorker();
-    setGenerating(true); setProgress(null); setError('');
+    setGenerating(true); setPendingDifficulty(requested); setProgress(null); setError('');
     try {
       const task = new Worker(new URL('./generator.worker.ts', import.meta.url), { type: 'module' });
       worker.current = task;
       watchdog.current = setTimeout(() => {
-        stopWorker(); setGenerating(false); setError('L9 生成超时，请重新生成。当前进度已保留。');
+        stopWorker(); setGenerating(false); setPendingDifficulty(null); setError('生成超时，请重新生成。当前进度已保留。');
       }, 25000);
       task.onmessage = ({ data }) => {
         if (worker.current !== task) return;
         if (data.progress) { setProgress(data.progress); return; }
-        if (data.puzzle) setState(createGame(data.puzzle)); else setError(data.error);
+        if (data.puzzle) { setState(createGame(data.puzzle)); setDifficulty(requested); } else setError(data.error);
+        setPendingDifficulty(null);
         setGenerating(false); stopWorker();
       };
-      task.onerror = () => { if (worker.current !== task) return; setError('题目生成失败，请重试。'); setGenerating(false); stopWorker(); };
-      task.postMessage(null);
-    } catch { stopWorker(); setGenerating(false); setError('无法启动题目生成器，请刷新重试。'); }
-  }, [stopWorker]);
+      task.onerror = () => { if (worker.current !== task) return; setPendingDifficulty(null); setError('题目生成失败，请重试。'); setGenerating(false); stopWorker(); };
+      task.postMessage({ difficulty: requested });
+    } catch { stopWorker(); setPendingDifficulty(null); setGenerating(false); setError('无法启动题目生成器，请刷新重试。'); }
+  }, [stopWorker, difficulty]);
   useEffect(() => {
     if (!state) newGame();
     return stopWorker;
@@ -52,5 +56,5 @@ export function useGame() {
   const dispatch = useCallback((action: GameAction) => {
     if (!generating) setState(current => current ? gameReducer(current, action) : current);
   }, [generating]);
-  return { state, dispatch, newGame, generating, progress, error, storageError };
+  return { state, difficulty, pendingDifficulty, dispatch, newGame, generating, progress, error, storageError };
 }

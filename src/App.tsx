@@ -1,3 +1,4 @@
+import { DIFFICULTIES, type GameDifficulty } from './domain/difficulty';
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { DifficultyReport } from './components/DifficultyReport';
 import { Board } from './components/Board';
@@ -16,14 +17,14 @@ function ToolIcon({ kind }: { kind: 'undo' | 'erase' | 'notes' }) {
 }
 
 export function App() {
-  const { state, dispatch, newGame, generating, progress, error, storageError } = useGame();
+  const { state, difficulty, pendingDifficulty, dispatch, newGame, generating, progress, error, storageError } = useGame();
   const mainRef = useRef<HTMLElement>(null);
   useEffect(() => { mainRef.current?.focus({ preventScroll: true }); }, [state?.puzzle.id]);
   const playable = state?.status === 'playing' && !generating;
   const selectedCell = state?.cells[state.selected];
-  const requestGame = () => {
+  const requestGame = (requested: GameDifficulty = difficulty) => {
     if (state?.status === 'playing' && !window.confirm('开始新游戏将替换当前进度，确定继续吗？')) return;
-    newGame();
+    newGame(requested);
   };
   function onKeyDown(event: KeyboardEvent<HTMLElement>) {
     if (!state || generating || event.nativeEvent.isComposing || event.altKey ||
@@ -54,8 +55,14 @@ export function App() {
   }
   return <main className="app" ref={mainRef} onKeyDown={onKeyDown} tabIndex={-1}>
     <header><a className="brand" href="./">Super Sudoku<span>专注每一步。</span></a><span className="local-label"><i /> 单机 · 本地保存</span></header>
-    <div className="heading"><h1>Difficulty: <strong>{!state || state.puzzle.analysis?.version === 2 ? 'L9' : 'Extreme（旧题）'}</strong></h1><span>不计时，慢慢想。</span></div>
-    {!state ? <section className="loading" aria-live="polite"><div className="loading-grid">▦</div><h2>{error || '正在生成你的数独…'}</h2><p>生成 L9 数独，校验唯一解与逻辑难度。{progress && ` 已筛选 ${progress.attempt} 个候选题。`}</p>{error && <button className="new-game" onClick={newGame}>重新生成</button>}</section> :
+    <div className="heading"><div className="difficulty-control"><label htmlFor="difficulty">Difficulty:</label>
+      <select id="difficulty" value={pendingDifficulty ?? difficulty} disabled={generating}
+        onChange={event => requestGame(event.target.value as GameDifficulty)}>
+        <option value="easy">easy</option><option value="medium">medium</option>
+      </select>
+      <span>{state && state.puzzle.analysis?.version !== 2 ? '旧题' : DIFFICULTIES[pendingDifficulty ?? difficulty].level}</span>
+    </div><span>不计时，慢慢想。</span></div>
+    {!state ? <section className="loading" aria-live="polite"><div className="loading-grid">▦</div><h2>{error || '正在生成你的数独…'}</h2><p>生成 {pendingDifficulty ?? difficulty} 数独，校验唯一解与逻辑难度。{progress && ` 已筛选 ${progress.attempt} 个候选题。`}</p>{error && <button className="new-game" onClick={() => newGame()}>重新生成</button>}</section> :
       <div className="game-layout" aria-busy={generating}>
         <div className="board-wrap">
           <Board cells={state.cells} selected={state.selected} highlightedDigit={state.highlightedDigit}
@@ -82,7 +89,7 @@ export function App() {
               </button>;
             })}
           </div>
-          <button className="new-game" disabled={generating} onClick={requestGame}>{generating ? '正在生成…' : 'New Game'}</button>
+          <button className="new-game" disabled={generating} onClick={() => requestGame()}>{generating ? '正在生成…' : 'New Game'}</button>
           <div aria-live="polite" aria-atomic="true">
             {state.status !== 'playing' ? <div className={`result ${state.status}`}><strong>{state.status === 'completed' ? '漂亮，解开了！' : '本局结束'}</strong><p>{state.status === 'completed' ? '每一步推理，都有答案。再来一局？' : '已累计三次错误。开始新的一局，再试一次。'}</p></div> :
               <p className="preview-help">{state.mistakes ? `已累计 ${state.mistakes} 次错误。` : ''}填错三次结束。选中数字时，全盘同数字及草稿一起高亮。</p>}

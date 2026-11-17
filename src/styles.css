@@ -56,3 +56,11 @@ button { touch-action: manipulation; }
 .logical-steps li { padding: 8px 4px; border-bottom: 1px solid var(--line); }
 .logical-steps p { overflow-wrap: anywhere; margin: 4px 0; }
 .heading strong, .difficulty-report > p > strong { font-family: var(--font-numbers); }
+
+.difficulty-control { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.difficulty-control label { color: var(--muted); font-size: 16px; }
+.difficulty-control select { font: inherit; font-weight: 600; color: var(--accent); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 24px 8px 10px; cursor: pointer; }
+.difficulty-control select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.difficulty-control select:disabled { opacity: .6; cursor: wait; }
+.difficulty-control > span { font-family: var(--font-numbers); color: var(--muted); font-size: 12px; }
+@media(max-width:420px) { .heading { flex-wrap: wrap; gap: 10px; } .difficulty-control { gap: 8px; } }

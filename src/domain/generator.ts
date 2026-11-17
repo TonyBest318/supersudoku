@@ -1,5 +1,6 @@
+import { DIFFICULTIES, isGameDifficulty, type GameDifficulty } from './difficulty';
 import { generate as coreGenerate } from 'sudoku-core';
-import { analyzeCorePuzzle, isL9Report } from './coreRating';
+import { analyzeCorePuzzle, isDifficultyReport } from './coreRating';
 import { shuffle, solve } from './solver';
 import type { Puzzle, Value } from './types';
 
@@ -25,14 +26,17 @@ export function generateCandidate(config: { targetClues: number; attempts: numbe
   return best!;
 }
 
-// Use the pinned engine's actual L9 rating, never a local approximation.
+// Use the pinned engine's actual L8/L9 ratings, never a local approximation.
 export const GENERATION_CONFIG = { attempts: 500, maxMilliseconds: 20000 } as const;
 export interface GenerationProgress { attempt: number; limit: number }
 export function generatePuzzle(
-  config: { attempts: number; maxMilliseconds: number } = GENERATION_CONFIG,
+  config: { attempts: number; maxMilliseconds: number; difficulty?: GameDifficulty } = GENERATION_CONFIG,
   random = Math.random,
   onProgress?: (progress: GenerationProgress) => void,
 ): Puzzle {
+  const difficulty = config.difficulty ?? 'medium';
+  if (!isGameDifficulty(difficulty)) throw new Error('难度参数无效');
+  const { level } = DIFFICULTIES[difficulty];
   if (!Number.isInteger(config.attempts) || config.attempts < 1 || config.attempts > 5000 ||
       !Number.isFinite(config.maxMilliseconds) || config.maxMilliseconds <= 0) throw new Error('生成参数无效');
   const start = performance.now();
@@ -42,13 +46,13 @@ export function generatePuzzle(
     onProgress?.({ attempt, limit: config.attempts });
     let givens: Value[];
     try {
-      givens = coreGenerate('L9', { seed: Math.floor(random() * 0x100000000), maxAttempts: 1, timeoutMs: remaining }) as Value[];
+      givens = coreGenerate(level, { seed: Math.floor(random() * 0x100000000), maxAttempts: 1, timeoutMs: remaining }) as Value[];
     } catch (error) {
-      if (error instanceof Error && error.message.startsWith('Could not generate a "L9" puzzle within budget')) continue;
+      if (error instanceof Error && error.message.startsWith(`Could not generate a "${level}" puzzle within budget`)) continue;
       throw error;
     }
     const analysis = analyzeCorePuzzle(givens);
-    if (!isL9Report(analysis)) continue;
+    if (!isDifficultyReport(analysis, difficulty)) continue;
     const solutions = solve(givens, 2);
     if (solutions.length !== 1 || !analysis.board.every((v, i) => v === solutions[0][i])) continue;
     // Independently check all reported placements and eliminations against the unique answer.
@@ -56,5 +60,5 @@ export function generatePuzzle(
         step.eliminations.every(c => c.digit !== solutions[0][c.cell]))) continue;
     return { id: givens.map(n => n ?? 0).join(''), givens, solution: solutions[0], analysis };
   }
-  throw new Error('本次未找到通过 L9 评级的题目，请重新生成。');
+  throw new Error(`本次未找到通过 ${difficulty}（${level}）评级的题目，请重新生成。`);
 }
