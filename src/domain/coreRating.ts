@@ -1,9 +1,11 @@
 import { DIFFICULTIES, type GameDifficulty } from './difficulty';
-import { solve as coreSolve, TACTICS, type Difficulty } from 'sudoku-core';
+import { solve as coreSolve, TACTICS, STRATEGY, type Difficulty } from 'sudoku-core';
 import type { LogicalReport, LogicalStep } from './logicalSolver';
 import type { Digit, Value } from './types';
 
 export const CORE_ENGINE = 'sudoku-core@4.1.1' as const;
+// Applied to both modes. Reject the whole puzzle, never hide a required step.
+export const BANNED_TECHNIQUES: ReadonlySet<string> = new Set([STRATEGY.WXYZ_WING]);
 export const CORE_TACTICS = new Map(TACTICS.map(t => [t.title as string, t]));
 export interface CoreReport extends Omit<LogicalReport, 'version' | 'steps' | 'counts'> {
   version: 2;
@@ -64,5 +66,5 @@ export function analyzeCorePuzzle(givens: readonly Value[]): CoreReport {
 export function isDifficultyReport(report: CoreReport, difficulty: GameDifficulty): boolean {
   const { level, maxTechniqueRank } = DIFFICULTIES[difficulty];
   return report.status === 'solved' && report.difficulty === level && report.steps.length > 0 &&
-    report.steps.every(step => { const tactic = CORE_TACTICS.get(step.technique); return tactic !== undefined && tactic.rank < maxTechniqueRank; });
+    report.steps.every(step => { const tactic = CORE_TACTICS.get(step.technique); return tactic !== undefined && tactic.rank < maxTechniqueRank && !BANNED_TECHNIQUES.has(step.technique); });
 }

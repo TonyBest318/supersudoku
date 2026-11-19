@@ -26,6 +26,8 @@ it.each<GameDifficulty>(['easy', 'medium'])('generates %s at its exact rating wi
     expect(report.version).toBe(2);
     if (report.version !== 2) throw new Error('Wrong engine');
     expect(isDifficultyReport(report, difficulty)).toBe(true);
+    expect(report.steps.some(step => step.technique === STRATEGY.WXYZ_WING)).toBe(false);
+    expect(report.counts[STRATEGY.WXYZ_WING]).toBeUndefined();
     expect(report.board).toEqual(puzzle.solution);
     const board = [...puzzle.givens];
     const candidates = board.map((v, i) => new Set(v ? [] : DIGITS.filter(d => !board.some((v, j) => isPeer(i, j) && v === d))));
@@ -54,7 +56,8 @@ it.each<GameDifficulty>(['easy', 'medium'])('generates %s at its exact rating wi
 }, 30000);
 it('rejects lower ratings, L10 techniques and unknown techniques rather than silently accepting them', () => {
   const report = analyzeCorePuzzle(fixture);
-  expect(isDifficultyReport(report, 'medium')).toBe(true);
+  expect(report.steps.some(step => step.technique === STRATEGY.WXYZ_WING)).toBe(true);
+  expect(isDifficultyReport(report, 'medium')).toBe(false);
   expect(isDifficultyReport({ ...report, difficulty: 'L8' }, 'medium')).toBe(false);
   expect(isDifficultyReport({ ...report, difficulty: 'L10' }, 'medium')).toBe(false);
   for (const technique of [STRATEGY.MEDUSA_3D, STRATEGY.AIC, STRATEGY.NISHIO, 'unknown']) {
@@ -89,4 +92,11 @@ it('rebuilds core reports on restore while preserving old ratings and ungraded s
       expect(parseSavedGame(JSON.stringify(tampered))).toEqual(state);
     }
   }
+});
+
+it.each<GameDifficulty>(['easy', 'medium'])('explicitly bans WXYZ-Wing in %s even within its rank ceiling', difficulty => {
+  const report = analyzeCorePuzzle(fixture);
+  const step = report.steps.find(s => s.technique === STRATEGY.WXYZ_WING)!;
+  expect(step).toBeDefined();
+  expect(isDifficultyReport({ ...report, difficulty: DIFFICULTIES[difficulty].level, steps: [step] }, difficulty)).toBe(false);
 });
