@@ -42,4 +42,4 @@ UI 默认 easy，加载已有 core 报告时根据 L8/L9 恢复 easy/medium；�
 
 ## 禁用技巧
 
-两档新题都显式禁用 **WXYZ-Wing**：若 sudoku-core 的完整解法使用该技巧，整题被拒绝并继续生成；不隐藏步骤、不降低 L8/L9 标准。过滤表位于 `src/domain/coreRating.ts` 的 `BANNED_TECHNIQUES`。因此接受的新题都有一条不使用 WXYZ-Wing 的完整解法，但不表示棋盘上完全不存在该图形。已有存档保持原题和原推理记录，从下一局应用禁用规则。
+两档新题都显式禁用 **WXYZ-Wing 和 W-Wing**：若 sudoku-core 的完整解法使用其中任一技巧，整题被拒绝并继续生成；不隐藏步骤、不降低 L8/L9 标准。过滤表位于 `src/domain/coreRating.ts` 的 `BANNED_TECHNIQUES`。因此接受的新题都有一条不使用 WXYZ-Wing、W-Wing 的完整解法，但不表示棋盘上完全不存在该图形。已有存档保持原题和原推理记录，从下一局应用禁用规则。

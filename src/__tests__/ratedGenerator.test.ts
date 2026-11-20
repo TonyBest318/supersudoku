@@ -28,6 +28,8 @@ it.each<GameDifficulty>(['easy', 'medium'])('generates %s at its exact rating wi
     expect(isDifficultyReport(report, difficulty)).toBe(true);
     expect(report.steps.some(step => step.technique === STRATEGY.WXYZ_WING)).toBe(false);
     expect(report.counts[STRATEGY.WXYZ_WING]).toBeUndefined();
+    expect(report.steps.some(step => step.technique === STRATEGY.W_WING)).toBe(false);
+    expect(report.counts[STRATEGY.W_WING]).toBeUndefined();
     expect(report.board).toEqual(puzzle.solution);
     const board = [...puzzle.givens];
     const candidates = board.map((v, i) => new Set(v ? [] : DIGITS.filter(d => !board.some((v, j) => isPeer(i, j) && v === d))));
@@ -98,5 +100,11 @@ it.each<GameDifficulty>(['easy', 'medium'])('explicitly bans WXYZ-Wing in %s eve
   const report = analyzeCorePuzzle(fixture);
   const step = report.steps.find(s => s.technique === STRATEGY.WXYZ_WING)!;
   expect(step).toBeDefined();
+  expect(isDifficultyReport({ ...report, difficulty: DIFFICULTIES[difficulty].level, steps: [step] }, difficulty)).toBe(false);
+});
+
+it.each<GameDifficulty>(['easy', 'medium'])('explicitly bans W-Wing in %s even within its rank ceiling', difficulty => {
+  const report = analyzeCorePuzzle(fixture);
+  const step = { ...report.steps[0], technique: STRATEGY.W_WING };
   expect(isDifficultyReport({ ...report, difficulty: DIFFICULTIES[difficulty].level, steps: [step] }, difficulty)).toBe(false);
 });

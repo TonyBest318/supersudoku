@@ -5,7 +5,7 @@ import type { Digit, Value } from './types';
 
 export const CORE_ENGINE = 'sudoku-core@4.1.1' as const;
 // Applied to both modes. Reject the whole puzzle, never hide a required step.
-export const BANNED_TECHNIQUES: ReadonlySet<string> = new Set([STRATEGY.WXYZ_WING]);
+export const BANNED_TECHNIQUES: ReadonlySet<string> = new Set([STRATEGY.WXYZ_WING, STRATEGY.W_WING]);
 export const CORE_TACTICS = new Map(TACTICS.map(t => [t.title as string, t]));
 export interface CoreReport extends Omit<LogicalReport, 'version' | 'steps' | 'counts'> {
   version: 2;
